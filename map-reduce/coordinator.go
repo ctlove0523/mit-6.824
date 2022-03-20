@@ -2,49 +2,11 @@ package map_reduce
 
 import (
 	"fmt"
+	"net"
+	"net/http"
+	"net/rpc"
 	"sync"
 )
-import "net"
-import "net/rpc"
-import "net/http"
-
-// workerInfo 用于表示已经注册的worker
-type workerInfo struct {
-	Id      int    // 唯一表示一个执行任务的worker
-	Address string // 执行任务的worker的地址，用于RPC调用
-}
-
-type Task struct {
-	Id        string
-	mapStatus int
-	mapLock   sync.Mutex
-
-	reduceStatus int
-	reduceLock   sync.Mutex
-}
-
-type MapTask struct {
-	TaskId   string
-	WorkerId int
-	Outputs  []MapTaskOutput
-}
-
-type MapTaskOutput struct {
-	ReduceRegionNo int
-	FileName       string
-}
-
-type ReduceTask struct {
-	TaskId         string
-	WorkerId       int
-	ReduceRegionNo int
-	Outputs        []ReduceTaskOutput
-}
-
-type ReduceTaskOutput struct {
-	ReduceRegionNo int
-	FileName       string
-}
 
 type Coordinator struct {
 	Address     string
@@ -94,9 +56,43 @@ func (c *Coordinator) ReportMapTaskProgress(req *ReportMapTaskProgressRequest, r
 
 			for _, v := range requests {
 				w := c.Workers[v.ReduceNumber%len(c.Workers)]
+
+				reduceTask := &ReduceTask{
+					TaskId:         v.TaskId,
+					WorkerId:       w.Id,
+					ReduceRegionNo: v.ReduceNumber,
+					Outputs:        []ReduceTaskOutput{},
+				}
+
+				workerReduceTasks, ok := c.ReduceTasks[v.TaskId]
+				if !ok {
+					workerReduceTasks = make(map[int]*ReduceTask)
+				}
+				workerReduceTasks[w.Id] = reduceTask
+				c.ReduceTasks[v.TaskId] = workerReduceTasks
+
 				c.AssignReduceTask(w, v)
 			}
 		}()
+	}
+	*resp = RpcResponse{}
+	return nil
+}
+
+func (c *Coordinator) ReportReduceTaskProgress(req *ReportReduceTaskProgressRequest, resp *RpcResponse) error {
+	fmt.Printf("worker %d begin report reduce task progress, reduce task state is  %d\n", req.WorkerId, req.TaskStatus)
+	task := c.Tasks[req.TaskId]
+	task.reduceLock.Lock()
+	task.reduceStatus -= req.TaskStatus
+
+	reduceTasks := c.ReduceTasks[req.TaskId]
+	reduceTask := reduceTasks[req.WorkerId]
+	reduceTask.Outputs = append(reduceTask.Outputs, req.Outputs...)
+
+	task.reduceLock.Unlock()
+
+	if task.reduceStatus == 0 {
+		fmt.Println("reduce task finished")
 	}
 	*resp = RpcResponse{}
 	return nil
@@ -121,9 +117,11 @@ func (c *Coordinator) RegisterWorker(req RegisterWorkerRequest, resp *RegisterWo
 func (c *Coordinator) AddMapReduceTask(req *AddTaskRequest, resp *AddTaskResponse) error {
 	fmt.Println("begin map reduce task")
 	t := &Task{
-		Id:        NewTaskId(),
-		mapStatus: len(c.Workers),
-		mapLock:   sync.Mutex{},
+		Id:           NewTaskId(),
+		mapStatus:    len(c.Workers),
+		mapLock:      sync.Mutex{},
+		reduceStatus: c.ReduceSize,
+		reduceLock:   sync.Mutex{},
 	}
 	c.Tasks[t.Id] = t
 	fileNames := req.FileNames

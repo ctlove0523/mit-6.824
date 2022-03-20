@@ -31,36 +31,6 @@ func NewWorker(id int, address, CoordinatorAddress string) *Worker {
 	return w
 }
 
-type AssignMapTaskRequest struct {
-	TaskId     string
-	MapTaskId  int
-	Files      []string
-	ReduceSize int
-}
-
-type AssignMapTaskResponse struct {
-	Result bool
-}
-
-type AssignReduceTaskRequest struct {
-	TaskId       string
-	FileNames    []string
-	ReduceNumber int
-}
-
-type AssignReduceTaskResponse struct {
-	Result bool
-}
-
-type AssignTaskRequest struct {
-	TaskId   int
-	FileName string
-}
-
-type AssignTaskResponse struct {
-	Result bool
-}
-
 type KeyValuePair struct {
 	Key   string
 	Value int
@@ -84,6 +54,26 @@ func (w *Worker) reportMapTaskState(req *AssignMapTaskRequest, outputs []MapTask
 	}
 	resp := RpcResponse{}
 	err = client.Call("Coordinator.ReportMapTaskProgress", &reportReq, &resp)
+	if err != nil {
+		fmt.Println("report map task state failed")
+	}
+
+}
+
+func (w *Worker) reportReduceTaskState(req *AssignReduceTaskRequest, outputs []ReduceTaskOutput) {
+	client, err := rpc.DialHTTP("tcp", w.CoordinatorAddress)
+	if err != nil {
+		fmt.Printf("connect to coordinator failed,err = %s\n", err)
+		return
+	}
+	reportReq := ReportReduceTaskProgressRequest{
+		WorkerId:   w.Id,
+		TaskId:     req.TaskId,
+		TaskStatus: 1,
+		Outputs:    outputs,
+	}
+	resp := RpcResponse{}
+	err = client.Call("Coordinator.ReportReduceTaskProgress", &reportReq, &resp)
 	if err != nil {
 		fmt.Println("report map task state failed")
 	}
@@ -208,7 +198,8 @@ func (w *Worker) reduceFunction(req *AssignReduceTaskRequest) error {
 	}
 
 	// reduce 结果写入到文件中
-	writeFile, err := os.Create(fmt.Sprintf("reduce-%d.txt", req.ReduceNumber))
+	fileName := fmt.Sprintf("reduce-%d.txt", req.ReduceNumber)
+	writeFile, err := os.Create(fileName)
 	if err != nil {
 		fmt.Println("create reduce file failed")
 		return err
@@ -217,11 +208,19 @@ func (w *Worker) reduceFunction(req *AssignReduceTaskRequest) error {
 	for k, v := range wordMap {
 		_, err := fmt.Fprintf(writeFile, "%v,%v\n", k, v)
 		if err != nil {
-			fmt.Println("append to file faield")
+			fmt.Println("append to file failed")
 			writeFile.Close()
 			return err
 		}
 	}
+
+	outputs := []ReduceTaskOutput{
+		{
+			ReduceRegionNo: req.ReduceNumber,
+			FileName:       fileName,
+		},
+	}
+	w.reportReduceTaskState(req, outputs)
 
 	return nil
 }

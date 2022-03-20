@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	map_reduce "map-reduce"
+	mr "map-reduce"
 )
 
 func main() {
-	coordinator := map_reduce.MakeCoordinator()
+	coordinator := mr.MakeCoordinator()
 	if coordinator == nil {
 		fmt.Println("create coordinator failed")
 	}
