@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	c := mr.NewCoordinator("localhost:4789")
+	c := mr.NewCoordinator("localhost:4789", "localhost:3789")
 
 	c.Start()
 }

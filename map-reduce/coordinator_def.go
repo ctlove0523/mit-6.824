@@ -1,6 +1,8 @@
 package map_reduce
 
-import "github.com/go-basic/uuid"
+import (
+	"github.com/go-basic/uuid"
+)
 
 func NewTask(name string, inputs []string, mapSize, reduceSize int32) *Task {
 	task := &Task{
@@ -36,6 +38,20 @@ type MapTask struct {
 	Outputs  map[int][]string // key为按照ReduceSize分区后的值，取值范围[0,ReduceSize)
 }
 
+func (mt *MapTask) calculateState() TaskState {
+	s := Finished
+	for _, v := range mt.subTasks {
+		if v.state < s {
+			s = v.state
+		}
+		if s == Failed {
+			break
+		}
+	}
+
+	return s
+}
+
 func (mt *MapTask) UpdateSubTask(id int, state TaskState, results map[uint32]string) {
 	st := mt.subTasks[id]
 	st.state = state
@@ -43,6 +59,8 @@ func (mt *MapTask) UpdateSubTask(id int, state TaskState, results map[uint32]str
 	if st.Outputs == nil {
 		st.Outputs = map[uint32]string{}
 	}
+
+	mt.state = mt.calculateState()
 
 	for k, v := range results {
 		outs, ok := mt.Outputs[int(k)]
@@ -84,6 +102,27 @@ type ReduceTask struct {
 	Outputs  []string
 }
 
+func (rt *ReduceTask) calculateState() TaskState {
+	s := Finished
+	for _, v := range rt.subTasks {
+		if v.state < s {
+			s = v.state
+		}
+		if s == Failed {
+			break
+		}
+	}
+
+	return s
+}
+
+func (rt *ReduceTask) UpdateSubTask(id int, state TaskState, output string) {
+	st := rt.subTasks[id]
+	st.state = state
+	st.Output = output
+	rt.state = rt.calculateState()
+}
+
 func (rt *ReduceTask) IsFinished() bool {
 	res := true
 	for _, v := range rt.subTasks {
@@ -110,8 +149,13 @@ type TaskState int
 
 const (
 	_ TaskState = iota
+	Failed
 	WaitProcess
 	Processing
 	Finished
-	Failed
 )
+
+type TaskDetail struct {
+	TaskId string `json:"task_id"`
+	State  int    `json:"state"`
+}

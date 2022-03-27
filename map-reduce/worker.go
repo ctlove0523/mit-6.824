@@ -144,10 +144,10 @@ func (w *Worker) executeMapTask(req *api2.CreateMapTaskRequest) error {
 		outputs[uint32(k)] = v.Name()
 	}
 	reportProgressRequest := &api2.ReportMapTaskProgressRequest{
-		TaskId: req.TaskId,
-		Id:     req.Id,
-		State:  1,
-		Output: outputs,
+		TaskId:  req.TaskId,
+		Id:      req.Id,
+		State:   1,
+		Outputs: outputs,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
