@@ -3,91 +3,92 @@ package map_reduce
 import (
 	"bufio"
 	"fmt"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"io"
+	"log"
+	api2 "mit-6.824/map-reduce/proto"
 	"net"
-	"net/http"
-	"net/rpc"
 	"os"
 	"strings"
+	"time"
 	"unicode"
 )
 
 type Worker struct {
-	Id                 int
+	Id                 string
 	Address            string
 	CoordinatorAddress string
+	client             api2.CoordinatorServerClient
+	server             api2.WorkerServerServer
 }
 
-func NewWorker(id int, address, CoordinatorAddress string) *Worker {
-	w := &Worker{
-		Id:                 id,
-		Address:            address,
-		CoordinatorAddress: CoordinatorAddress,
-	}
+func (w *Worker) Start() {
+	log.Println("begin to start worker")
 
-	w.start()
+	// connect to coordinator
+	conn, err := grpc.Dial(w.CoordinatorAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("connect to coordinator failed: %v", err)
+	}
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			fmt.Println("close connect to coordinator failed")
+		}
+	}()
+
+	c := api2.NewCoordinatorServerClient(conn)
+	w.client = c
+
 	w.register()
-
-	return w
-}
-
-type KeyValuePair struct {
-	Key   string
-	Value int
-}
-
-func (kvp *KeyValuePair) String() string {
-	return fmt.Sprintf("%v,%v", kvp.Key, kvp.Value)
-}
-
-func (w *Worker) reportMapTaskState(req *AssignMapTaskRequest, outputs []MapTaskOutput) {
-	client, err := rpc.DialHTTP("tcp", w.CoordinatorAddress)
+	// 启动rpc server
+	listener, err := net.Listen("tcp", w.Address)
 	if err != nil {
-		fmt.Printf("connect to coordinator failed,err = %s\n", err)
-		return
+		log.Fatalf("worker start failed,error = %s", err)
 	}
-	reportReq := ReportMapTaskProgressRequest{
-		WorkerId:   w.Id,
-		TaskId:     req.TaskId,
-		TaskStatus: 1,
-		Outputs:    outputs,
-	}
-	resp := RpcResponse{}
-	err = client.Call("Coordinator.ReportMapTaskProgress", &reportReq, &resp)
-	if err != nil {
-		fmt.Println("report map task state failed")
+	grpcServer := grpc.NewServer()
+	api2.RegisterWorkerServerServer(grpcServer, w)
+	if err := grpcServer.Serve(listener); err != nil {
+		log.Fatalf("failed to serve: %v", err)
 	}
 
 }
 
-func (w *Worker) reportReduceTaskState(req *AssignReduceTaskRequest, outputs []ReduceTaskOutput) {
-	client, err := rpc.DialHTTP("tcp", w.CoordinatorAddress)
+func (w *Worker) register() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	req := &api2.RegisterWorkerRequest{
+		Address: w.Address,
+	}
+	resp, err := w.client.RegisterWorker(ctx, req)
 	if err != nil {
-		fmt.Printf("connect to coordinator failed,err = %s\n", err)
-		return
+		log.Fatalf("register failed,error = %s", err)
 	}
-	reportReq := ReportReduceTaskProgressRequest{
-		WorkerId:   w.Id,
-		TaskId:     req.TaskId,
-		TaskStatus: 1,
-		Outputs:    outputs,
-	}
-	resp := RpcResponse{}
-	err = client.Call("Coordinator.ReportReduceTaskProgress", &reportReq, &resp)
-	if err != nil {
-		fmt.Println("report map task state failed")
-	}
-
+	w.Id = resp.Id
 }
 
-func (w *Worker) mapFunction(req *AssignMapTaskRequest) error {
-	fmt.Printf("begin to execute map task,input files = %s\n", req.Files)
+func (w *Worker) CreateMapTask(ctx context.Context, req *api2.CreateMapTaskRequest) (*api2.CreateMapTaskResponse, error) {
+	log.Println("get map task")
+	go func() {
+		w.executeMapTask(req)
+	}()
+	return &api2.CreateMapTaskResponse{
+		Id:     req.Id,
+		TaskId: req.TaskId,
+		Result: true,
+	}, nil
+}
+
+func (w *Worker) executeMapTask(req *api2.CreateMapTaskRequest) error {
+	log.Printf("begin to execute map task for %s map-reduce task,id = %d", req.TaskId, req.Id)
 
 	ff := func(r rune) bool { return !unicode.IsLetter(r) }
 	files := make(map[int]*os.File)
-	for _, fileName := range req.Files {
+	for _, input := range req.Inputs {
 		// 打开文件
-		f, err := os.Open(fileName)
+		f, err := os.Open(input)
 		if err != nil {
 			fmt.Printf("open file failed,err = %s\n", err)
 			return err
@@ -116,7 +117,8 @@ func (w *Worker) mapFunction(req *AssignMapTaskRequest) error {
 		}
 
 		for _, v := range keyValues {
-			hashVal := HashFunction(v.Key) % req.ReduceSize
+			hashVal := int(HashFunction(v.Key) % req.GetReduceSize())
+
 			f, ok := files[hashVal]
 			if !ok {
 				file, err := w.createFile(hashVal)
@@ -137,37 +139,41 @@ func (w *Worker) mapFunction(req *AssignMapTaskRequest) error {
 		}
 	}
 
-	var fileNames []MapTaskOutput
+	outputs := make(map[uint32]string)
 	for k, v := range files {
-		fileNames = append(fileNames, MapTaskOutput{
-			FileName:       v.Name(),
-			ReduceRegionNo: k,
-		})
+		outputs[uint32(k)] = v.Name()
 	}
-	w.reportMapTaskState(req, fileNames)
+	reportProgressRequest := &api2.ReportMapTaskProgressRequest{
+		TaskId: req.TaskId,
+		Id:     req.Id,
+		State:  1,
+		Output: outputs,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	resp, err := w.client.ReportMapTaskProgress(ctx, reportProgressRequest)
+	if err != nil {
+		log.Println("report map task state failed")
+		return err
+	}
+	log.Printf("report map task state %v", resp.Result)
 	return nil
 }
 
-func (w *Worker) AssignMapTask(req *AssignMapTaskRequest, resp *AssignMapTaskResponse) error {
-	fmt.Println("get map task")
+func (w *Worker) CreateReduceTask(ctx context.Context, req *api2.CreateReduceTaskRequest) (*api2.CreateReduceTaskResponse, error) {
+	log.Println("begin to process reduce task")
 	go func() {
-		w.mapFunction(req)
+		w.executeReduceTask(req)
 	}()
+	resp := &api2.CreateReduceTaskResponse{}
 
-	return nil
+	return resp, nil
 }
 
-func (w *Worker) AssignReduceTask(req *AssignReduceTaskRequest, resp *AssignMapTaskResponse) error {
-	fmt.Println("get reduce task")
-	go func() {
-		w.reduceFunction(req)
-	}()
-
-	return nil
-}
-
-func (w *Worker) reduceFunction(req *AssignReduceTaskRequest) error {
-	files := req.FileNames
+func (w *Worker) executeReduceTask(req *api2.CreateReduceTaskRequest) error {
+	files := req.Inputs
 	fmt.Println(files)
 
 	wordMap := map[string]int{}
@@ -198,7 +204,7 @@ func (w *Worker) reduceFunction(req *AssignReduceTaskRequest) error {
 	}
 
 	// reduce 结果写入到文件中
-	fileName := fmt.Sprintf("reduce-%d.txt", req.ReduceNumber)
+	fileName := fmt.Sprintf("reduce-%d.txt", req.ReduceRegionId)
 	writeFile, err := os.Create(fileName)
 	if err != nil {
 		fmt.Println("create reduce file failed")
@@ -214,61 +220,37 @@ func (w *Worker) reduceFunction(req *AssignReduceTaskRequest) error {
 		}
 	}
 
-	outputs := []ReduceTaskOutput{
-		{
-			ReduceRegionNo: req.ReduceNumber,
-			FileName:       fileName,
-		},
+	outputs := api2.ReportReduceTaskProgressRequest{
+		TaskId: req.TaskId,
+		Id:     req.Id,
+		State:  3,
+		Output: fileName,
 	}
-	w.reportReduceTaskState(req, outputs)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	resp, err := w.client.ReportReduceTaskProgress(ctx, &outputs)
+	if err != nil {
+		log.Printf("report reduce task progress failed,error = %s", err)
+		return err
+	}
+
+	log.Println(resp)
 
 	return nil
 }
+
 func (w *Worker) createFile(index int) (*os.File, error) {
-	intermediateFileName := fmt.Sprintf("intermediate-%d-%d.txt", w.Id, index)
+	intermediateFileName := fmt.Sprintf("intermediate-%s-%d.txt", w.Id, index)
 	return os.Create(intermediateFileName)
 }
 
-func (w *Worker) AssignTask(res *AssignTaskRequest, resp *AssignTaskResponse) error {
-	fmt.Println("get assigned task")
-	return nil
+type KeyValuePair struct {
+	Key   string
+	Value int
 }
 
-func (w *Worker) start() error {
-	err := rpc.Register(w)
-	if err != nil {
-		fmt.Println("workerInfo rpc register failed")
-		return err
-	}
-	rpc.HandleHTTP()
-
-	listener, err := net.Listen("tcp", w.Address)
-	if err != nil {
-		fmt.Println("workerInfo listener failed")
-		return err
-	}
-
-	go http.Serve(listener, nil)
-
-	return nil
-}
-
-func (w *Worker) register() {
-	client, err := rpc.DialHTTP("tcp", w.CoordinatorAddress)
-	if err != nil {
-		fmt.Println(err)
-		panic(err.Error())
-	}
-
-	req := RegisterWorkerRequest{
-		Id:      w.Id,
-		Address: w.Address,
-	}
-	resp := &RegisterWorkerResponse{}
-	err = client.Call("Coordinator.RegisterWorker", req, resp)
-	if err != nil {
-		fmt.Println("register failed")
-		panic(err.Error())
-	}
-
+func (kvp *KeyValuePair) String() string {
+	return fmt.Sprintf("%v,%v", kvp.Key, kvp.Value)
 }

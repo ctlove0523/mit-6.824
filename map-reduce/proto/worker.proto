@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option go_package = "api";
+
+service WorkerServer {
+  rpc CreateMapTask(CreateMapTaskRequest) returns (CreateMapTaskResponse) {}
+
+  rpc CreateReduceTask(CreateReduceTaskRequest) returns (CreateReduceTaskResponse) {}
+}
+
+message CreateMapTaskRequest {
+  uint32 id = 1;
+  repeated string inputs = 2;
+  string task_id = 3;
+
+  uint32 reduce_size = 4;
+}
+
+message CreateMapTaskResponse {
+  uint32  id = 1;
+  bool result = 2;
+  string task_id = 3;
+}
+
+message CreateReduceTaskRequest {
+  uint32 id = 1;
+  repeated string inputs = 2;
+  string task_id = 3;
+  uint32 reduce_region_id = 4;
+}
+
+message CreateReduceTaskResponse {
+  uint32  id = 1;
+  bool result = 2;
+  string task_id = 3;
+}

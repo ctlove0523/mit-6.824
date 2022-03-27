@@ -6,16 +6,20 @@ import (
 	"hash/fnv"
 )
 
-func HashFunction(key string) int {
+func HashFunction(key string) uint32 {
 	h := fnv.New32a()
 	_, err := h.Write([]byte(key))
 	if err != nil {
 		fmt.Println("calculate hash Value failed")
 		return 0
 	}
-	return int(h.Sum32() & 0x7fffffff)
+	return h.Sum32() & 0x7fffffff
 }
 
 func NewTaskId() string {
+	return uuid.New()
+}
+
+func NewWorkerId() string {
 	return uuid.New()
 }
