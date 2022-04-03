@@ -8,6 +8,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"io/ioutil"
 	"log"
 	api "mit-6.824/map-reduce/proto"
 	"net"
@@ -61,6 +62,7 @@ func (c *Coordinator) Start() error {
 	go func() {
 		router := httprouter.New()
 		router.GET("/tasks/:id", c.queryTask)
+		router.POST("/tasks", c.createTask)
 		err := http.ListenAndServe(c.httpAddress, router)
 		if err != nil {
 			log.Printf("coordinator http server failed to serve: %v", err)
@@ -90,6 +92,103 @@ func (c *Coordinator) queryTask(writer http.ResponseWriter, request *http.Reques
 	}
 	writer.Write(body)
 	writer.WriteHeader(200)
+}
+
+func (c *Coordinator) createTask(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	log.Println("begin to create map reduce task")
+
+	body, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		log.Println("read request body failed")
+		writer.WriteHeader(400)
+		return
+	}
+
+	ctr := &CreateTaskRequest{}
+	err = json.Unmarshal(body, ctr)
+	if err != nil {
+		log.Println("unmarshal request body to CreateTaskRequest failed")
+		writer.WriteHeader(400)
+		return
+	}
+
+	task := NewTask(ctr.Name, ctr.Inputs, int32(ctr.MapSize), int32(ctr.ReduceSize))
+
+	c.tasks[task.Id] = task
+
+	go func() {
+		// 划分map任务的输入
+		inputs := map[int][]string{}
+		for i := 0; i < len(ctr.Inputs); i++ {
+			index := i % len(c.workers)
+			files, ok := inputs[index]
+			if !ok {
+				files = []string{ctr.Inputs[i]}
+			} else {
+				files = append(files, ctr.Inputs[i])
+			}
+			inputs[index] = files
+		}
+
+		// 任务分发给worker执行
+		mapTask := &MapTask{
+			Id:       NewTaskId(),
+			Inputs:   ctr.Inputs,
+			state:    WaitProcess,
+			subTasks: make([]*SubMapTask, len(inputs)),
+			Outputs:  map[int][]string{},
+		}
+		task.mapTask = mapTask
+
+		for k, v := range inputs {
+			mapReq := &api.CreateMapTaskRequest{
+				TaskId:     task.Id,
+				Id:         uint32(k),
+				Inputs:     v,
+				ReduceSize: 3,
+			}
+
+			subMapTask := &SubMapTask{
+				Id:       uint16(k),
+				WorkerId: c.workers[k].id,
+				state:    WaitProcess,
+				Inputs:   v,
+				Outputs:  map[uint32]string{},
+			}
+			task.mapTask.subTasks[k] = subMapTask
+
+			conn, err := grpc.Dial(c.workers[k].address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				log.Fatalf("did not connect: %v", err)
+			}
+			defer conn.Close()
+			client := api.NewWorkerServerClient(conn)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			resp, err := client.CreateMapTask(ctx, mapReq)
+			if err != nil {
+				log.Fatalf("create map task failed")
+			}
+
+			subMapTask.state = Processing
+			log.Println(resp.Result)
+
+		}
+	}()
+
+	resp := CreateTaskResponse{
+		Id: task.Id,
+	}
+
+	respBody, err := json.Marshal(resp)
+	if err != nil {
+		writer.WriteHeader(500)
+	}
+
+	writer.Write(respBody)
+	writer.WriteHeader(201)
 }
 
 func (c *Coordinator) QueryTask(ctx context.Context, req *api.QueryTaskRequest) (*api.QueryTaskResponse, error) {

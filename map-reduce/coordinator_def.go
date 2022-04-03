@@ -159,3 +159,14 @@ type TaskDetail struct {
 	TaskId string `json:"task_id"`
 	State  int    `json:"state"`
 }
+
+type CreateTaskRequest struct {
+	Name       string   `json:"name"`
+	Inputs     []string `json:"inputs"`
+	MapSize    int      `json:"map_size"`
+	ReduceSize int      `json:"reduce_size"`
+}
+
+type CreateTaskResponse struct {
+	Id string `json:"id"`
+}
