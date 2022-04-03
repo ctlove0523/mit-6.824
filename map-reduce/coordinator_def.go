@@ -14,7 +14,6 @@ func NewTask(name string, inputs []string, mapSize, reduceSize int32) *Task {
 		Outputs:    []string{},
 		state:      WaitProcess,
 	}
-
 	return task
 }
 
@@ -30,13 +29,44 @@ type Task struct {
 	reduceTask *ReduceTask
 }
 
+func (t *Task) UpdateMapTask(id int, state TaskState, results map[uint32]string) {
+	// update map task state
+	st := t.mapTask.subTasks[id]
+	st.state = state
+	st.Outputs = results
+	if st.Outputs == nil {
+		st.Outputs = map[uint32]string{}
+	}
+
+	for k, v := range results {
+		outs, ok := t.mapTask.Outputs[int(k)]
+		if !ok {
+			outs = []string{}
+		}
+		outs = append(outs, v)
+		t.mapTask.Outputs[int(k)] = outs
+	}
+
+	t.mapTask.state = t.mapTask.calculateState()
+	t.state = t.calculateState()
+}
+
+func (t *Task) UpdateReduceTask(id int, state TaskState, output string) {
+	st := t.reduceTask.subTasks[id]
+	st.state = state
+	st.Output = output
+	t.reduceTask.state = t.reduceTask.calculateState()
+	t.state = t.calculateState()
+}
+
 func (t *Task) calculateState() TaskState {
-	if t.mapTask.state < t.reduceTask.state {
-		t.state = t.mapTask.state
+	if t.mapTask == nil {
+		return WaitProcess
+	}
+	if t.reduceTask == nil {
 		return t.mapTask.state
 	}
 
-	t.state = t.reduceTask.state
 	return t.reduceTask.state
 }
 
@@ -51,6 +81,10 @@ type MapTask struct {
 func (mt *MapTask) calculateState() TaskState {
 	s := Finished
 	for _, v := range mt.subTasks {
+		if v == nil {
+			continue
+		}
+
 		if v.state < s {
 			s = v.state
 		}
@@ -60,26 +94,6 @@ func (mt *MapTask) calculateState() TaskState {
 	}
 
 	return s
-}
-
-func (mt *MapTask) UpdateSubTask(id int, state TaskState, results map[uint32]string) {
-	st := mt.subTasks[id]
-	st.state = state
-	st.Outputs = results
-	if st.Outputs == nil {
-		st.Outputs = map[uint32]string{}
-	}
-
-	for k, v := range results {
-		outs, ok := mt.Outputs[int(k)]
-		if !ok {
-			outs = []string{}
-		}
-		outs = append(outs, v)
-		mt.Outputs[int(k)] = outs
-	}
-
-	mt.state = mt.calculateState()
 }
 
 func (mt *MapTask) IsFinished() bool {
@@ -114,6 +128,9 @@ type ReduceTask struct {
 func (rt *ReduceTask) calculateState() TaskState {
 	s := Finished
 	for _, v := range rt.subTasks {
+		if v == nil {
+			continue
+		}
 		if v.state < s {
 			s = v.state
 		}
@@ -123,13 +140,6 @@ func (rt *ReduceTask) calculateState() TaskState {
 	}
 
 	return s
-}
-
-func (rt *ReduceTask) UpdateSubTask(id int, state TaskState, output string) {
-	st := rt.subTasks[id]
-	st.state = state
-	st.Output = output
-	rt.state = rt.calculateState()
 }
 
 func (rt *ReduceTask) IsFinished() bool {

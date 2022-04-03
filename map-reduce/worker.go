@@ -146,10 +146,11 @@ func (w *Worker) executeMapTask(req *api2.CreateMapTaskRequest) error {
 	reportProgressRequest := &api2.ReportMapTaskProgressRequest{
 		TaskId:  req.TaskId,
 		Id:      req.Id,
-		State:   1,
+		State:   4,
 		Outputs: outputs,
 	}
 
+	time.Sleep(20 * time.Second)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -223,10 +224,11 @@ func (w *Worker) executeReduceTask(req *api2.CreateReduceTaskRequest) error {
 	outputs := api2.ReportReduceTaskProgressRequest{
 		TaskId: req.TaskId,
 		Id:     req.Id,
-		State:  3,
+		State:  4,
 		Output: fileName,
 	}
 
+	time.Sleep(10 * time.Second)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

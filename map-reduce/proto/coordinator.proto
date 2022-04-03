@@ -4,7 +4,6 @@ option go_package = "api";
 
 service CoordinatorServer {
   rpc RegisterWorker(RegisterWorkerRequest)  returns (RegisterWorkerResponse) {}
-  rpc QueryTask(QueryTaskRequest) returns(QueryTaskResponse) {}
   rpc ReportMapTaskProgress(ReportMapTaskProgressRequest) returns (ReportMapTaskProgressResponse){}
   rpc ReportReduceTaskProgress(ReportReduceTaskProgressRequest) returns(ReportReduceTaskProgressResponse) {}
 }
@@ -16,15 +15,6 @@ message RegisterWorkerRequest {
 message RegisterWorkerResponse {
   string id = 1;
   string coordinator_address = 2;
-}
-
-message QueryTaskRequest {
-  string task_id = 1;
-}
-
-message QueryTaskResponse {
-  string task_id = 1;
-  int32 state = 2;
 }
 
 message ReportMapTaskProgressRequest {

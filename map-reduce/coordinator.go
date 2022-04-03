@@ -2,7 +2,7 @@ package map_reduce
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"github.com/go-basic/uuid"
 	"github.com/julienschmidt/httprouter"
 	"golang.org/x/net/context"
@@ -85,6 +85,7 @@ func (c *Coordinator) queryTask(writer http.ResponseWriter, request *http.Reques
 		TaskId: taskId,
 		State:  int(task.state),
 	}
+
 	body, err := json.Marshal(resp)
 	if err != nil {
 		log.Printf("json marshal failed")
@@ -172,10 +173,8 @@ func (c *Coordinator) createTask(writer http.ResponseWriter, request *http.Reque
 			if err != nil {
 				log.Fatalf("create map task failed")
 			}
-
-			subMapTask.state = Processing
-			log.Println(resp.Result)
-
+			task.UpdateMapTask(k, Processing, nil)
+			fmt.Println(resp)
 		}
 	}()
 
@@ -193,25 +192,12 @@ func (c *Coordinator) createTask(writer http.ResponseWriter, request *http.Reque
 	writer.WriteHeader(201)
 }
 
-func (c *Coordinator) QueryTask(ctx context.Context, req *api.QueryTaskRequest) (*api.QueryTaskResponse, error) {
-	task, ok := c.tasks[req.TaskId]
-	if !ok {
-		return nil, errors.New("task not found")
-	}
-	resp := &api.QueryTaskResponse{
-		TaskId: task.Id,
-		State:  int32(task.state),
-	}
-
-	return resp, nil
-}
-
 func (c *Coordinator) ReportMapTaskProgress(ctx context.Context, req *api.ReportMapTaskProgressRequest) (*api.ReportMapTaskProgressResponse, error) {
 	log.Println("begin to process map task progress report")
 	log.Println(req.Outputs)
 	task := c.tasks[req.TaskId]
-	task.mapTask.subTasks[req.Id].state = Finished
-	task.mapTask.UpdateSubTask(int(req.Id), Finished, req.Outputs)
+	task.mapTask.subTasks[req.Id].state = TaskState(req.State)
+	task.UpdateMapTask(int(req.Id), Finished, req.Outputs)
 
 	go func() {
 		if task.mapTask.IsFinished() {
@@ -230,7 +216,6 @@ func (c *Coordinator) executeReduceTask(taskId string) error {
 	log.Println("begin to execute reduce task")
 	task := c.tasks[taskId]
 	mapOutputs := task.mapTask.Outputs
-	log.Printf("map outputs is %v", mapOutputs)
 
 	reduceTask := &ReduceTask{
 		Id:       NewTaskId(),
@@ -278,6 +263,8 @@ func (c *Coordinator) executeReduceTask(taskId string) error {
 			return err
 		}
 
+		task.UpdateReduceTask(k, Processing, "")
+
 		log.Println(resp)
 	}
 
@@ -287,8 +274,7 @@ func (c *Coordinator) ReportReduceTaskProgress(ctx context.Context, req *api.Rep
 	log.Println("begin to process map task progress report")
 	log.Println(req.Output)
 	task := c.tasks[req.TaskId]
-	task.reduceTask.subTasks[req.Id].state = Finished
-	task.reduceTask.subTasks[req.Id].Output = req.Output
+	task.UpdateReduceTask(int(req.Id), TaskState(req.State), req.Output)
 
 	if task.reduceTask.IsFinished() {
 		log.Println("reduce task finished")
