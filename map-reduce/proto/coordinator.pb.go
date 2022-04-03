@@ -34,7 +34,7 @@ func (m *RegisterWorkerRequest) Reset()         { *m = RegisterWorkerRequest{} }
 func (m *RegisterWorkerRequest) String() string { return proto.CompactTextString(m) }
 func (*RegisterWorkerRequest) ProtoMessage()    {}
 func (*RegisterWorkerRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_coordinator_e97987140a14de24, []int{0}
+	return fileDescriptor_coordinator_0ae1350a27e98355, []int{0}
 }
 func (m *RegisterWorkerRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RegisterWorkerRequest.Unmarshal(m, b)
@@ -73,7 +73,7 @@ func (m *RegisterWorkerResponse) Reset()         { *m = RegisterWorkerResponse{}
 func (m *RegisterWorkerResponse) String() string { return proto.CompactTextString(m) }
 func (*RegisterWorkerResponse) ProtoMessage()    {}
 func (*RegisterWorkerResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_coordinator_e97987140a14de24, []int{1}
+	return fileDescriptor_coordinator_0ae1350a27e98355, []int{1}
 }
 func (m *RegisterWorkerResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RegisterWorkerResponse.Unmarshal(m, b)
@@ -118,7 +118,7 @@ func (m *QueryTaskRequest) Reset()         { *m = QueryTaskRequest{} }
 func (m *QueryTaskRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryTaskRequest) ProtoMessage()    {}
 func (*QueryTaskRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_coordinator_e97987140a14de24, []int{2}
+	return fileDescriptor_coordinator_0ae1350a27e98355, []int{2}
 }
 func (m *QueryTaskRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryTaskRequest.Unmarshal(m, b)
@@ -157,7 +157,7 @@ func (m *QueryTaskResponse) Reset()         { *m = QueryTaskResponse{} }
 func (m *QueryTaskResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryTaskResponse) ProtoMessage()    {}
 func (*QueryTaskResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_coordinator_e97987140a14de24, []int{3}
+	return fileDescriptor_coordinator_0ae1350a27e98355, []int{3}
 }
 func (m *QueryTaskResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryTaskResponse.Unmarshal(m, b)
@@ -191,106 +191,6 @@ func (m *QueryTaskResponse) GetState() int32 {
 	return 0
 }
 
-type CreateMapReduceTaskRequest struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Inputs               []string `protobuf:"bytes,2,rep,name=inputs,proto3" json:"inputs,omitempty"`
-	MapSize              int32    `protobuf:"varint,3,opt,name=map_size,json=mapSize,proto3" json:"map_size,omitempty"`
-	ReduceSize           int32    `protobuf:"varint,4,opt,name=reduce_size,json=reduceSize,proto3" json:"reduce_size,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *CreateMapReduceTaskRequest) Reset()         { *m = CreateMapReduceTaskRequest{} }
-func (m *CreateMapReduceTaskRequest) String() string { return proto.CompactTextString(m) }
-func (*CreateMapReduceTaskRequest) ProtoMessage()    {}
-func (*CreateMapReduceTaskRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_coordinator_e97987140a14de24, []int{4}
-}
-func (m *CreateMapReduceTaskRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CreateMapReduceTaskRequest.Unmarshal(m, b)
-}
-func (m *CreateMapReduceTaskRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CreateMapReduceTaskRequest.Marshal(b, m, deterministic)
-}
-func (dst *CreateMapReduceTaskRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateMapReduceTaskRequest.Merge(dst, src)
-}
-func (m *CreateMapReduceTaskRequest) XXX_Size() int {
-	return xxx_messageInfo_CreateMapReduceTaskRequest.Size(m)
-}
-func (m *CreateMapReduceTaskRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_CreateMapReduceTaskRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CreateMapReduceTaskRequest proto.InternalMessageInfo
-
-func (m *CreateMapReduceTaskRequest) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *CreateMapReduceTaskRequest) GetInputs() []string {
-	if m != nil {
-		return m.Inputs
-	}
-	return nil
-}
-
-func (m *CreateMapReduceTaskRequest) GetMapSize() int32 {
-	if m != nil {
-		return m.MapSize
-	}
-	return 0
-}
-
-func (m *CreateMapReduceTaskRequest) GetReduceSize() int32 {
-	if m != nil {
-		return m.ReduceSize
-	}
-	return 0
-}
-
-type CreateMapReduceTaskResponse struct {
-	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *CreateMapReduceTaskResponse) Reset()         { *m = CreateMapReduceTaskResponse{} }
-func (m *CreateMapReduceTaskResponse) String() string { return proto.CompactTextString(m) }
-func (*CreateMapReduceTaskResponse) ProtoMessage()    {}
-func (*CreateMapReduceTaskResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_coordinator_e97987140a14de24, []int{5}
-}
-func (m *CreateMapReduceTaskResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CreateMapReduceTaskResponse.Unmarshal(m, b)
-}
-func (m *CreateMapReduceTaskResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CreateMapReduceTaskResponse.Marshal(b, m, deterministic)
-}
-func (dst *CreateMapReduceTaskResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateMapReduceTaskResponse.Merge(dst, src)
-}
-func (m *CreateMapReduceTaskResponse) XXX_Size() int {
-	return xxx_messageInfo_CreateMapReduceTaskResponse.Size(m)
-}
-func (m *CreateMapReduceTaskResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_CreateMapReduceTaskResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CreateMapReduceTaskResponse proto.InternalMessageInfo
-
-func (m *CreateMapReduceTaskResponse) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
 type ReportMapTaskProgressRequest struct {
 	TaskId               string            `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
 	Id                   uint32            `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
@@ -305,7 +205,7 @@ func (m *ReportMapTaskProgressRequest) Reset()         { *m = ReportMapTaskProgr
 func (m *ReportMapTaskProgressRequest) String() string { return proto.CompactTextString(m) }
 func (*ReportMapTaskProgressRequest) ProtoMessage()    {}
 func (*ReportMapTaskProgressRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_coordinator_e97987140a14de24, []int{6}
+	return fileDescriptor_coordinator_0ae1350a27e98355, []int{4}
 }
 func (m *ReportMapTaskProgressRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReportMapTaskProgressRequest.Unmarshal(m, b)
@@ -364,7 +264,7 @@ func (m *ReportMapTaskProgressResponse) Reset()         { *m = ReportMapTaskProg
 func (m *ReportMapTaskProgressResponse) String() string { return proto.CompactTextString(m) }
 func (*ReportMapTaskProgressResponse) ProtoMessage()    {}
 func (*ReportMapTaskProgressResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_coordinator_e97987140a14de24, []int{7}
+	return fileDescriptor_coordinator_0ae1350a27e98355, []int{5}
 }
 func (m *ReportMapTaskProgressResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReportMapTaskProgressResponse.Unmarshal(m, b)
@@ -405,7 +305,7 @@ func (m *ReportReduceTaskProgressRequest) Reset()         { *m = ReportReduceTas
 func (m *ReportReduceTaskProgressRequest) String() string { return proto.CompactTextString(m) }
 func (*ReportReduceTaskProgressRequest) ProtoMessage()    {}
 func (*ReportReduceTaskProgressRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_coordinator_e97987140a14de24, []int{8}
+	return fileDescriptor_coordinator_0ae1350a27e98355, []int{6}
 }
 func (m *ReportReduceTaskProgressRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReportReduceTaskProgressRequest.Unmarshal(m, b)
@@ -464,7 +364,7 @@ func (m *ReportReduceTaskProgressResponse) Reset()         { *m = ReportReduceTa
 func (m *ReportReduceTaskProgressResponse) String() string { return proto.CompactTextString(m) }
 func (*ReportReduceTaskProgressResponse) ProtoMessage()    {}
 func (*ReportReduceTaskProgressResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_coordinator_e97987140a14de24, []int{9}
+	return fileDescriptor_coordinator_0ae1350a27e98355, []int{7}
 }
 func (m *ReportReduceTaskProgressResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReportReduceTaskProgressResponse.Unmarshal(m, b)
@@ -496,8 +396,6 @@ func init() {
 	proto.RegisterType((*RegisterWorkerResponse)(nil), "RegisterWorkerResponse")
 	proto.RegisterType((*QueryTaskRequest)(nil), "QueryTaskRequest")
 	proto.RegisterType((*QueryTaskResponse)(nil), "QueryTaskResponse")
-	proto.RegisterType((*CreateMapReduceTaskRequest)(nil), "CreateMapReduceTaskRequest")
-	proto.RegisterType((*CreateMapReduceTaskResponse)(nil), "CreateMapReduceTaskResponse")
 	proto.RegisterType((*ReportMapTaskProgressRequest)(nil), "ReportMapTaskProgressRequest")
 	proto.RegisterMapType((map[uint32]string)(nil), "ReportMapTaskProgressRequest.OutputsEntry")
 	proto.RegisterType((*ReportMapTaskProgressResponse)(nil), "ReportMapTaskProgressResponse")
@@ -518,7 +416,6 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type CoordinatorServerClient interface {
 	RegisterWorker(ctx context.Context, in *RegisterWorkerRequest, opts ...grpc.CallOption) (*RegisterWorkerResponse, error)
-	CreateTask(ctx context.Context, in *CreateMapReduceTaskRequest, opts ...grpc.CallOption) (*CreateMapReduceTaskResponse, error)
 	QueryTask(ctx context.Context, in *QueryTaskRequest, opts ...grpc.CallOption) (*QueryTaskResponse, error)
 	ReportMapTaskProgress(ctx context.Context, in *ReportMapTaskProgressRequest, opts ...grpc.CallOption) (*ReportMapTaskProgressResponse, error)
 	ReportReduceTaskProgress(ctx context.Context, in *ReportReduceTaskProgressRequest, opts ...grpc.CallOption) (*ReportReduceTaskProgressResponse, error)
@@ -535,15 +432,6 @@ func NewCoordinatorServerClient(cc *grpc.ClientConn) CoordinatorServerClient {
 func (c *coordinatorServerClient) RegisterWorker(ctx context.Context, in *RegisterWorkerRequest, opts ...grpc.CallOption) (*RegisterWorkerResponse, error) {
 	out := new(RegisterWorkerResponse)
 	err := c.cc.Invoke(ctx, "/CoordinatorServer/RegisterWorker", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *coordinatorServerClient) CreateTask(ctx context.Context, in *CreateMapReduceTaskRequest, opts ...grpc.CallOption) (*CreateMapReduceTaskResponse, error) {
-	out := new(CreateMapReduceTaskResponse)
-	err := c.cc.Invoke(ctx, "/CoordinatorServer/CreateTask", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -580,7 +468,6 @@ func (c *coordinatorServerClient) ReportReduceTaskProgress(ctx context.Context, 
 // CoordinatorServerServer is the server API for CoordinatorServer service.
 type CoordinatorServerServer interface {
 	RegisterWorker(context.Context, *RegisterWorkerRequest) (*RegisterWorkerResponse, error)
-	CreateTask(context.Context, *CreateMapReduceTaskRequest) (*CreateMapReduceTaskResponse, error)
 	QueryTask(context.Context, *QueryTaskRequest) (*QueryTaskResponse, error)
 	ReportMapTaskProgress(context.Context, *ReportMapTaskProgressRequest) (*ReportMapTaskProgressResponse, error)
 	ReportReduceTaskProgress(context.Context, *ReportReduceTaskProgressRequest) (*ReportReduceTaskProgressResponse, error)
@@ -604,24 +491,6 @@ func _CoordinatorServer_RegisterWorker_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CoordinatorServerServer).RegisterWorker(ctx, req.(*RegisterWorkerRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _CoordinatorServer_CreateTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateMapReduceTaskRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CoordinatorServerServer).CreateTask(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/CoordinatorServer/CreateTask",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoordinatorServerServer).CreateTask(ctx, req.(*CreateMapReduceTaskRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -689,10 +558,6 @@ var _CoordinatorServer_serviceDesc = grpc.ServiceDesc{
 			Handler:    _CoordinatorServer_RegisterWorker_Handler,
 		},
 		{
-			MethodName: "CreateTask",
-			Handler:    _CoordinatorServer_CreateTask_Handler,
-		},
-		{
 			MethodName: "QueryTask",
 			Handler:    _CoordinatorServer_QueryTask_Handler,
 		},
@@ -709,42 +574,36 @@ var _CoordinatorServer_serviceDesc = grpc.ServiceDesc{
 	Metadata: "coordinator.proto",
 }
 
-func init() { proto.RegisterFile("coordinator.proto", fileDescriptor_coordinator_e97987140a14de24) }
+func init() { proto.RegisterFile("coordinator.proto", fileDescriptor_coordinator_0ae1350a27e98355) }
 
-var fileDescriptor_coordinator_e97987140a14de24 = []byte{
-	// 532 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x54, 0x4d, 0x6f, 0x13, 0x31,
-	0x10, 0x4d, 0xb2, 0xf9, 0x68, 0xa6, 0xb4, 0x6a, 0x06, 0x48, 0xc3, 0xb6, 0xa5, 0xc1, 0xa7, 0x0a,
-	0x84, 0x11, 0x05, 0x09, 0x94, 0x1b, 0x0d, 0x1c, 0x7a, 0xa8, 0x80, 0x2d, 0x12, 0x1f, 0x97, 0xc8,
-	0x74, 0x47, 0xd5, 0x2a, 0x4d, 0xbc, 0xd8, 0xde, 0x8a, 0xf4, 0xcc, 0x6f, 0xe0, 0xef, 0xf1, 0x57,
-	0x90, 0xed, 0x4d, 0x1a, 0x4a, 0xb2, 0xb9, 0xf4, 0xb6, 0x6f, 0x67, 0x3c, 0x6f, 0xfc, 0x66, 0x9e,
-	0xa1, 0x75, 0x26, 0xa5, 0x8a, 0x93, 0xb1, 0x30, 0x52, 0xf1, 0x54, 0x49, 0x23, 0xd9, 0x73, 0xb8,
-	0x1f, 0xd1, 0x79, 0xa2, 0x0d, 0xa9, 0xcf, 0x52, 0x0d, 0x49, 0x45, 0xf4, 0x23, 0x23, 0x6d, 0xb0,
-	0x03, 0x0d, 0x11, 0xc7, 0x8a, 0xb4, 0xee, 0x94, 0xbb, 0xe5, 0x83, 0x66, 0x34, 0x85, 0xec, 0x2b,
-	0xb4, 0x6f, 0x1e, 0xd1, 0xa9, 0x1c, 0x6b, 0xc2, 0x4d, 0xa8, 0x24, 0x71, 0x9e, 0x5e, 0x49, 0x62,
-	0x7c, 0x06, 0x77, 0xe7, 0x18, 0x07, 0xd3, 0x7a, 0x15, 0x97, 0x80, 0x73, 0xa1, 0x37, 0x79, 0xe9,
-	0x27, 0xb0, 0xf5, 0x31, 0x23, 0x35, 0xf9, 0x24, 0xf4, 0x70, 0xda, 0xc8, 0x36, 0x34, 0x8c, 0xd0,
-	0xc3, 0xc1, 0xac, 0x72, 0xdd, 0xc2, 0xe3, 0x98, 0x1d, 0x41, 0x6b, 0x2e, 0x39, 0x6f, 0x61, 0x59,
-	0x36, 0xde, 0x83, 0x9a, 0x36, 0xc2, 0x90, 0x63, 0xaf, 0x45, 0x1e, 0xb0, 0x5f, 0x65, 0x08, 0xfb,
-	0x8a, 0x84, 0xa1, 0x13, 0x91, 0x46, 0x14, 0x67, 0x67, 0x34, 0xcf, 0x8d, 0x50, 0x1d, 0x8b, 0x11,
-	0xe5, 0xa5, 0xdc, 0x37, 0xb6, 0xa1, 0x9e, 0x8c, 0xd3, 0xcc, 0xd8, 0x7b, 0x04, 0x96, 0xc0, 0x23,
-	0x7c, 0x00, 0x6b, 0x23, 0x91, 0x0e, 0x74, 0x72, 0x45, 0x9d, 0xc0, 0x71, 0x34, 0x46, 0x22, 0x3d,
-	0x4d, 0xae, 0x08, 0xf7, 0x61, 0x5d, 0xb9, 0xda, 0x3e, 0x5a, 0x75, 0x51, 0xf0, 0xbf, 0x6c, 0x02,
-	0x7b, 0x0a, 0x3b, 0x0b, 0xbb, 0x58, 0xac, 0x2b, 0xfb, 0x53, 0x86, 0xdd, 0x88, 0x52, 0xa9, 0xcc,
-	0x89, 0x48, 0x6d, 0xe6, 0x07, 0x25, 0xcf, 0xad, 0x80, 0xab, 0x34, 0xcb, 0x2b, 0x59, 0x09, 0x36,
-	0xdc, 0x84, 0x66, 0xaa, 0x04, 0xee, 0x97, 0x07, 0xf8, 0x16, 0x1a, 0x32, 0x33, 0xee, 0x8e, 0xd5,
-	0x6e, 0x70, 0xb0, 0x7e, 0xf8, 0x98, 0x17, 0xd1, 0xf1, 0xf7, 0x3e, 0xf9, 0xdd, 0xd8, 0xa8, 0x49,
-	0x34, 0x3d, 0x1a, 0xf6, 0xe0, 0xce, 0x7c, 0x00, 0xb7, 0x20, 0x18, 0xd2, 0xc4, 0x35, 0xb4, 0x11,
-	0xd9, 0x4f, 0xcb, 0x7e, 0x29, 0x2e, 0x32, 0xca, 0x37, 0xc2, 0x83, 0x5e, 0xe5, 0x75, 0x99, 0xbd,
-	0x82, 0xbd, 0x25, 0x8c, 0xb9, 0x24, 0x6d, 0xa8, 0x2b, 0xd2, 0xd9, 0x85, 0x71, 0xf5, 0xd6, 0xa2,
-	0x1c, 0xb1, 0x9f, 0xb0, 0xef, 0x0f, 0x5e, 0xcb, 0x78, 0xcb, 0xe2, 0xb4, 0xa1, 0xee, 0x6f, 0xe8,
-	0xe6, 0xd8, 0x8c, 0x72, 0xc4, 0x7a, 0xd0, 0x5d, 0xce, 0x5c, 0xdc, 0xf5, 0xe1, 0xef, 0x00, 0x5a,
-	0xfd, 0x6b, 0x3b, 0x9c, 0x92, 0xba, 0x24, 0x85, 0x7d, 0xd8, 0xfc, 0xd7, 0x68, 0xd8, 0xe6, 0x0b,
-	0xcd, 0x1a, 0x6e, 0xf3, 0xc5, 0x8e, 0x64, 0x25, 0x3c, 0x06, 0xf0, 0xab, 0x65, 0x1b, 0xc2, 0x1d,
-	0xbe, 0x7c, 0xdb, 0xc3, 0x5d, 0x5e, 0xb0, 0x84, 0xac, 0x84, 0x2f, 0xa1, 0x39, 0x33, 0x1c, 0xb6,
-	0xf8, 0x4d, 0xa7, 0x86, 0xc8, 0xff, 0xf3, 0x23, 0x2b, 0xe1, 0x17, 0xfb, 0xc2, 0x2c, 0x18, 0x25,
-	0xee, 0x15, 0x2e, 0x55, 0xf8, 0x90, 0x17, 0x6e, 0x00, 0x2b, 0xa1, 0x80, 0xce, 0x32, 0xc5, 0xb1,
-	0xcb, 0x57, 0xac, 0x41, 0xf8, 0x88, 0xaf, 0x1a, 0x17, 0x2b, 0x1d, 0xd5, 0xbe, 0x05, 0x22, 0x4d,
-	0xbe, 0xd7, 0xdd, 0x63, 0xf9, 0xe2, 0x6f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x7a, 0xe4, 0x22, 0x58,
-	0x41, 0x05, 0x00, 0x00,
+var fileDescriptor_coordinator_0ae1350a27e98355 = []byte{
+	// 435 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x54, 0x4d, 0x6f, 0xd3, 0x40,
+	0x10, 0x4d, 0x9c, 0xc6, 0xa1, 0x03, 0xad, 0xea, 0x01, 0x5c, 0xcb, 0xa2, 0x60, 0xf6, 0x54, 0x81,
+	0xb4, 0x88, 0x82, 0x04, 0xca, 0x8d, 0x16, 0x0e, 0x1c, 0x10, 0xb0, 0x20, 0xf1, 0x71, 0xa9, 0x96,
+	0x7a, 0x54, 0x59, 0xae, 0xb2, 0x66, 0x77, 0x5d, 0x91, 0xdf, 0xc8, 0x8f, 0xe0, 0xaf, 0x20, 0x7b,
+	0xed, 0x60, 0x4a, 0xec, 0x9c, 0xb8, 0xf9, 0x79, 0x67, 0xde, 0x9b, 0x79, 0xfb, 0x6c, 0x08, 0xce,
+	0x94, 0xd2, 0x69, 0xb6, 0x90, 0x56, 0x69, 0x5e, 0x68, 0x65, 0x15, 0x7b, 0x0c, 0xb7, 0x05, 0x9d,
+	0x67, 0xc6, 0x92, 0xfe, 0xa4, 0x74, 0x4e, 0x5a, 0xd0, 0xf7, 0x92, 0x8c, 0xc5, 0x08, 0x66, 0x32,
+	0x4d, 0x35, 0x19, 0x13, 0x8d, 0x93, 0xf1, 0xe1, 0xb6, 0x68, 0x21, 0xfb, 0x02, 0xe1, 0xd5, 0x16,
+	0x53, 0xa8, 0x85, 0x21, 0xdc, 0x05, 0x2f, 0x4b, 0x9b, 0x72, 0x2f, 0x4b, 0xf1, 0x11, 0xdc, 0xec,
+	0x28, 0x9e, 0xb6, 0x7c, 0x5e, 0x5d, 0x80, 0x9d, 0xa3, 0x17, 0x0d, 0xf5, 0x43, 0xd8, 0x7b, 0x5f,
+	0x92, 0x5e, 0x7e, 0x94, 0x26, 0x6f, 0x07, 0xd9, 0x87, 0x99, 0x95, 0x26, 0x3f, 0x5d, 0x31, 0xfb,
+	0x15, 0x7c, 0x9d, 0xb2, 0x63, 0x08, 0x3a, 0xc5, 0xcd, 0x08, 0x7d, 0xd5, 0x78, 0x0b, 0xa6, 0xc6,
+	0x4a, 0x4b, 0xb5, 0xfa, 0x54, 0x38, 0xc0, 0x7e, 0x8d, 0xe1, 0x8e, 0xa0, 0x42, 0x69, 0xfb, 0x46,
+	0x16, 0x15, 0xd1, 0x3b, 0xad, 0xce, 0xab, 0x51, 0x36, 0xa9, 0x37, 0xbb, 0x56, 0x64, 0x3b, 0xf5,
+	0xae, 0x2b, 0xfe, 0x49, 0xfd, 0xca, 0x01, 0x7c, 0x09, 0x33, 0x55, 0xda, 0xa2, 0xb4, 0x26, 0xda,
+	0x4a, 0x26, 0x87, 0xd7, 0x8f, 0x1e, 0xf0, 0x21, 0x39, 0xfe, 0xd6, 0x15, 0xbf, 0x5a, 0x58, 0xbd,
+	0x14, 0x6d, 0x6b, 0x3c, 0x87, 0x1b, 0xdd, 0x03, 0xdc, 0x83, 0x49, 0x4e, 0xcb, 0x7a, 0xa0, 0x1d,
+	0x51, 0x3d, 0x56, 0xea, 0x97, 0xf2, 0xa2, 0xa4, 0xc6, 0x5b, 0x07, 0xe6, 0xde, 0xf3, 0x31, 0x7b,
+	0x06, 0x07, 0x3d, 0x8a, 0x8d, 0x63, 0x21, 0xf8, 0x9a, 0x4c, 0x79, 0x61, 0x6b, 0xbe, 0x6b, 0xa2,
+	0x41, 0xec, 0x07, 0xdc, 0x73, 0x8d, 0x82, 0xd2, 0xf2, 0x8c, 0xfe, 0x83, 0x39, 0x21, 0xf8, 0x6e,
+	0xc3, 0x68, 0xcb, 0x75, 0x3b, 0xc4, 0xe6, 0x90, 0xf4, 0x2b, 0x0f, 0x4f, 0x7d, 0xf4, 0xd3, 0x83,
+	0xe0, 0xe4, 0x4f, 0xb0, 0x3e, 0x90, 0xbe, 0x24, 0x8d, 0x27, 0xb0, 0xfb, 0x77, 0x64, 0x31, 0xe4,
+	0x6b, 0x63, 0x1f, 0xef, 0xf3, 0xf5, 0xd9, 0x66, 0x23, 0x7c, 0x0a, 0xdb, 0xab, 0xbc, 0x61, 0xc0,
+	0xaf, 0x06, 0x35, 0x46, 0xfe, 0x4f, 0x1c, 0xd9, 0x08, 0x3f, 0x57, 0x1f, 0xd8, 0x1a, 0xff, 0xf1,
+	0x60, 0x30, 0x09, 0xf1, 0x5d, 0x3e, 0x78, 0x6d, 0x6c, 0x84, 0x12, 0xa2, 0x3e, 0x9b, 0x30, 0xe1,
+	0x1b, 0xee, 0x2e, 0xbe, 0xcf, 0x37, 0x79, 0xcc, 0x46, 0xc7, 0xd3, 0xaf, 0x13, 0x59, 0x64, 0xdf,
+	0xfc, 0xfa, 0x5f, 0xf1, 0xe4, 0x77, 0x00, 0x00, 0x00, 0xff, 0xff, 0x73, 0xb5, 0x63, 0x09, 0x40,
+	0x04, 0x00, 0x00,
 }
