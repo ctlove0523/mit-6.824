@@ -90,6 +90,7 @@ func (c *Coordinator) queryTask(writer http.ResponseWriter, request *http.Reques
 		log.Printf("json marshal failed")
 		writer.WriteHeader(500)
 	}
+	writer.Header().Add("Content-Type", "application/json")
 	writer.Write(body)
 	writer.WriteHeader(200)
 }
@@ -187,6 +188,7 @@ func (c *Coordinator) createTask(writer http.ResponseWriter, request *http.Reque
 		writer.WriteHeader(500)
 	}
 
+	writer.Header().Add("Content-Type", "application/json")
 	writer.Write(respBody)
 	writer.WriteHeader(201)
 }
@@ -290,6 +292,7 @@ func (c *Coordinator) ReportReduceTaskProgress(ctx context.Context, req *api.Rep
 
 	if task.reduceTask.IsFinished() {
 		log.Println("reduce task finished")
+		task.state = Finished
 	}
 	resp := &api.ReportReduceTaskProgressResponse{
 		Result: true,

@@ -30,6 +30,16 @@ type Task struct {
 	reduceTask *ReduceTask
 }
 
+func (t *Task) calculateState() TaskState {
+	if t.mapTask.state < t.reduceTask.state {
+		t.state = t.mapTask.state
+		return t.mapTask.state
+	}
+
+	t.state = t.reduceTask.state
+	return t.reduceTask.state
+}
+
 type MapTask struct {
 	Id       string
 	Inputs   []string // 执行一个Map任务的文件列表
@@ -60,8 +70,6 @@ func (mt *MapTask) UpdateSubTask(id int, state TaskState, results map[uint32]str
 		st.Outputs = map[uint32]string{}
 	}
 
-	mt.state = mt.calculateState()
-
 	for k, v := range results {
 		outs, ok := mt.Outputs[int(k)]
 		if !ok {
@@ -71,6 +79,7 @@ func (mt *MapTask) UpdateSubTask(id int, state TaskState, results map[uint32]str
 		mt.Outputs[int(k)] = outs
 	}
 
+	mt.state = mt.calculateState()
 }
 
 func (mt *MapTask) IsFinished() bool {
