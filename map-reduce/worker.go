@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"io"
 	"log"
-	api2 "mit-6.824/map-reduce/proto"
+	api "mit-6.824/map-reduce/proto"
 	"net"
 	"os"
 	"strings"
@@ -20,8 +20,8 @@ type Worker struct {
 	Id                 string
 	Address            string
 	CoordinatorAddress string
-	client             api2.CoordinatorServerClient
-	server             api2.WorkerServerServer
+	client             api.CoordinatorServerClient
+	server             api.WorkerServerServer
 }
 
 func (w *Worker) Start() {
@@ -39,7 +39,7 @@ func (w *Worker) Start() {
 		}
 	}()
 
-	c := api2.NewCoordinatorServerClient(conn)
+	c := api.NewCoordinatorServerClient(conn)
 	w.client = c
 
 	w.register()
@@ -49,7 +49,7 @@ func (w *Worker) Start() {
 		log.Fatalf("worker start failed,error = %s", err)
 	}
 	grpcServer := grpc.NewServer()
-	api2.RegisterWorkerServerServer(grpcServer, w)
+	api.RegisterWorkerServerServer(grpcServer, w)
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
@@ -59,7 +59,7 @@ func (w *Worker) Start() {
 func (w *Worker) register() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	req := &api2.RegisterWorkerRequest{
+	req := &api.RegisterWorkerRequest{
 		Address: w.Address,
 	}
 	resp, err := w.client.RegisterWorker(ctx, req)
@@ -69,19 +69,19 @@ func (w *Worker) register() {
 	w.Id = resp.Id
 }
 
-func (w *Worker) CreateMapTask(ctx context.Context, req *api2.CreateMapTaskRequest) (*api2.CreateMapTaskResponse, error) {
+func (w *Worker) CreateMapTask(ctx context.Context, req *api.CreateMapTaskRequest) (*api.CreateMapTaskResponse, error) {
 	log.Println("get map task")
 	go func() {
 		w.executeMapTask(req)
 	}()
-	return &api2.CreateMapTaskResponse{
+	return &api.CreateMapTaskResponse{
 		Id:     req.Id,
 		TaskId: req.TaskId,
 		Result: true,
 	}, nil
 }
 
-func (w *Worker) executeMapTask(req *api2.CreateMapTaskRequest) error {
+func (w *Worker) executeMapTask(req *api.CreateMapTaskRequest) error {
 	log.Printf("begin to execute map task for %s map-reduce task,id = %d", req.TaskId, req.Id)
 
 	ff := func(r rune) bool { return !unicode.IsLetter(r) }
@@ -143,7 +143,7 @@ func (w *Worker) executeMapTask(req *api2.CreateMapTaskRequest) error {
 	for k, v := range files {
 		outputs[uint32(k)] = v.Name()
 	}
-	reportProgressRequest := &api2.ReportMapTaskProgressRequest{
+	reportProgressRequest := &api.ReportMapTaskProgressRequest{
 		TaskId:  req.TaskId,
 		Id:      req.Id,
 		State:   4,
@@ -163,17 +163,17 @@ func (w *Worker) executeMapTask(req *api2.CreateMapTaskRequest) error {
 	return nil
 }
 
-func (w *Worker) CreateReduceTask(ctx context.Context, req *api2.CreateReduceTaskRequest) (*api2.CreateReduceTaskResponse, error) {
+func (w *Worker) CreateReduceTask(ctx context.Context, req *api.CreateReduceTaskRequest) (*api.CreateReduceTaskResponse, error) {
 	log.Println("begin to process reduce task")
 	go func() {
 		w.executeReduceTask(req)
 	}()
-	resp := &api2.CreateReduceTaskResponse{}
+	resp := &api.CreateReduceTaskResponse{}
 
 	return resp, nil
 }
 
-func (w *Worker) executeReduceTask(req *api2.CreateReduceTaskRequest) error {
+func (w *Worker) executeReduceTask(req *api.CreateReduceTaskRequest) error {
 	files := req.Inputs
 	fmt.Println(files)
 
@@ -221,7 +221,7 @@ func (w *Worker) executeReduceTask(req *api2.CreateReduceTaskRequest) error {
 		}
 	}
 
-	outputs := api2.ReportReduceTaskProgressRequest{
+	outputs := api.ReportReduceTaskProgressRequest{
 		TaskId: req.TaskId,
 		Id:     req.Id,
 		State:  4,
@@ -243,6 +243,13 @@ func (w *Worker) executeReduceTask(req *api2.CreateReduceTaskRequest) error {
 	return nil
 }
 
+func (w *Worker) HealthCheck(ctx context.Context, request *api.HealthCheckRequest) (*api.HealthCheckResponse, error) {
+	return &api.HealthCheckResponse{
+		Id:     w.Id,
+		Health: true,
+	}, nil
+
+}
 func (w *Worker) createFile(index int) (*os.File, error) {
 	intermediateFileName := fmt.Sprintf("intermediate-%s-%d.txt", w.Id, index)
 	return os.Create(intermediateFileName)

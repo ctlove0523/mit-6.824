@@ -17,8 +17,10 @@ import (
 )
 
 type workerInfo struct {
-	id      string
-	address string
+	id          string
+	address     string
+	alive       bool
+	failedTimes int
 }
 
 func NewCoordinator(address string, httpAddress string) *Coordinator {
@@ -36,8 +38,7 @@ type Coordinator struct {
 	httpAddress string
 	workers     []*workerInfo
 	tasks       map[string]*Task
-
-	stopCh chan struct{}
+	stopCh      chan struct{}
 }
 
 func (c *Coordinator) Start() error {
@@ -286,12 +287,25 @@ func (c *Coordinator) ReportReduceTaskProgress(ctx context.Context, req *api.Rep
 
 	return resp, nil
 }
+
+func (c *Coordinator) removeWorker(id string) {
+	var ws []*workerInfo
+	for _, v := range c.workers {
+		if v.id != id {
+			ws = append(ws, v)
+		}
+	}
+	c.workers = ws
+}
+
 func (c *Coordinator) RegisterWorker(ctx context.Context, req *api.RegisterWorkerRequest) (*api.RegisterWorkerResponse, error) {
 	log.Println("begin to process worker register")
 
 	worker := &workerInfo{
-		id:      newWorkerId(),
-		address: req.GetAddress(),
+		id:          newWorkerId(),
+		address:     req.GetAddress(),
+		alive:       true,
+		failedTimes: 0,
 	}
 	c.workers = append(c.workers, worker)
 
@@ -299,6 +313,37 @@ func (c *Coordinator) RegisterWorker(ctx context.Context, req *api.RegisterWorke
 		Id:                 worker.id,
 		CoordinatorAddress: c.address,
 	}
+
+	go func(w *workerInfo) {
+		intervalTicker := time.NewTicker(time.Duration(5 * int64(time.Second)))
+		defer intervalTicker.Stop()
+		for {
+			select {
+			case <-intervalTicker.C:
+				if w.failedTimes >= 3 {
+					log.Println("worker lost")
+					c.removeWorker(w.id)
+					return
+				}
+				conn, err := grpc.Dial(w.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				if err != nil {
+					log.Fatalf("did not connect: %v", err)
+					conn.Close()
+				}
+				client := api.NewWorkerServerClient(conn)
+
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				_, err = client.HealthCheck(ctx, &api.HealthCheckRequest{
+					Id: w.id,
+				})
+				if err != nil {
+					w.failedTimes += 1
+				}
+
+			}
+		}
+	}(worker)
 
 	return resp, nil
 

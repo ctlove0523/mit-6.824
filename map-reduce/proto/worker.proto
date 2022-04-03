@@ -4,8 +4,8 @@ option go_package = "api";
 
 service WorkerServer {
   rpc CreateMapTask(CreateMapTaskRequest) returns (CreateMapTaskResponse) {}
-
   rpc CreateReduceTask(CreateReduceTaskRequest) returns (CreateReduceTaskResponse) {}
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse) {}
 }
 
 message CreateMapTaskRequest {
@@ -33,4 +33,13 @@ message CreateReduceTaskResponse {
   uint32  id = 1;
   bool result = 2;
   string task_id = 3;
+}
+
+message HealthCheckRequest {
+  string id = 1;
+}
+
+message HealthCheckResponse {
+  string id = 1;
+  bool health = 2;
 }
