@@ -106,6 +106,7 @@ func (mt *MapTask) IsFinished() bool {
 }
 
 type SubMapTask struct {
+	TaskId   string
 	Id       uint16
 	WorkerId string
 	state    TaskState

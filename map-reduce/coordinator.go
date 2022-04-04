@@ -25,20 +25,22 @@ type workerInfo struct {
 
 func NewCoordinator(address string, httpAddress string) *Coordinator {
 	return &Coordinator{
-		address:     address,
-		httpAddress: httpAddress,
-		workers:     []*workerInfo{},
-		tasks:       map[string]*Task{},
-		stopCh:      make(chan struct{}),
+		address:        address,
+		httpAddress:    httpAddress,
+		workers:        []*workerInfo{},
+		workerMapTasks: map[string][]*SubMapTask{},
+		tasks:          map[string]*Task{},
+		stopCh:         make(chan struct{}),
 	}
 }
 
 type Coordinator struct {
-	address     string
-	httpAddress string
-	workers     []*workerInfo
-	tasks       map[string]*Task
-	stopCh      chan struct{}
+	address        string
+	httpAddress    string
+	workers        []*workerInfo
+	workerMapTasks map[string][]*SubMapTask
+	tasks          map[string]*Task
+	stopCh         chan struct{}
 }
 
 func (c *Coordinator) Start() error {
@@ -152,6 +154,7 @@ func (c *Coordinator) createTask(writer http.ResponseWriter, request *http.Reque
 			}
 
 			subMapTask := &SubMapTask{
+				TaskId:   task.Id,
 				Id:       uint16(k),
 				WorkerId: c.workers[k].id,
 				state:    WaitProcess,
@@ -159,6 +162,12 @@ func (c *Coordinator) createTask(writer http.ResponseWriter, request *http.Reque
 				Outputs:  map[uint32]string{},
 			}
 			task.mapTask.subTasks[k] = subMapTask
+			wmst, ok := c.workerMapTasks[c.workers[k].id]
+			if !ok {
+				wmst = []*SubMapTask{}
+			}
+			wmst = append(wmst, subMapTask)
+			c.workerMapTasks[c.workers[k].id] = wmst
 
 			conn, err := grpc.Dial(c.workers[k].address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
@@ -298,6 +307,41 @@ func (c *Coordinator) removeWorker(id string) {
 	c.workers = ws
 }
 
+func (c *Coordinator) processWorkerLost(id string) {
+	smt, ok := c.workerMapTasks[id]
+	if !ok {
+		log.Println("worker finish all task,no need to process failed")
+		return
+	}
+
+	// 选择新的worker
+	if len(c.workers) == 0 {
+		log.Println("current no worker can process task")
+		return
+	}
+	newWorker := c.workers[0]
+	conn, err := grpc.Dial(newWorker.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	client := api.NewWorkerServerClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	for _, v := range smt {
+		mapReq := &api.CreateMapTaskRequest{
+			TaskId:     v.TaskId,
+			Id:         uint32(v.Id),
+			Inputs:     v.Inputs,
+			ReduceSize: 3,
+		}
+		// 暂时不处理分发任务失败
+		client.CreateMapTask(ctx, mapReq)
+	}
+
+}
 func (c *Coordinator) RegisterWorker(ctx context.Context, req *api.RegisterWorkerRequest) (*api.RegisterWorkerResponse, error) {
 	log.Println("begin to process worker register")
 
@@ -315,30 +359,35 @@ func (c *Coordinator) RegisterWorker(ctx context.Context, req *api.RegisterWorke
 	}
 
 	go func(w *workerInfo) {
-		intervalTicker := time.NewTicker(time.Duration(5 * int64(time.Second)))
+		intervalTicker := time.NewTicker(time.Duration(3 * int64(time.Second)))
 		defer intervalTicker.Stop()
+
+		conn, err := grpc.Dial(w.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			log.Printf("coordinator did not connect to worker: %v", err)
+			c.removeWorker(w.id)
+		}
+		client := api.NewWorkerServerClient(conn)
+
 		for {
 			select {
 			case <-intervalTicker.C:
 				if w.failedTimes >= 3 {
 					log.Println("worker lost")
 					c.removeWorker(w.id)
+					c.processWorkerLost(w.id)
 					return
 				}
-				conn, err := grpc.Dial(w.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
-				if err != nil {
-					log.Fatalf("did not connect: %v", err)
-					conn.Close()
-				}
-				client := api.NewWorkerServerClient(conn)
 
-				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				healthCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 				defer cancel()
-				_, err = client.HealthCheck(ctx, &api.HealthCheckRequest{
+				_, err = client.HealthCheck(healthCtx, &api.HealthCheckRequest{
 					Id: w.id,
 				})
 				if err != nil {
 					w.failedTimes += 1
+				} else {
+					w.failedTimes = 0
 				}
 
 			}

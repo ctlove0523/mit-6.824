@@ -72,6 +72,7 @@ func (w *Worker) register() {
 func (w *Worker) CreateMapTask(ctx context.Context, req *api.CreateMapTaskRequest) (*api.CreateMapTaskResponse, error) {
 	log.Println("get map task")
 	go func() {
+		time.Sleep(10 * time.Second)
 		w.executeMapTask(req)
 	}()
 	return &api.CreateMapTaskResponse{
@@ -244,6 +245,7 @@ func (w *Worker) executeReduceTask(req *api.CreateReduceTaskRequest) error {
 }
 
 func (w *Worker) HealthCheck(ctx context.Context, request *api.HealthCheckRequest) (*api.HealthCheckResponse, error) {
+	fmt.Println("health check")
 	return &api.HealthCheckResponse{
 		Id:     w.Id,
 		Health: true,
@@ -252,7 +254,15 @@ func (w *Worker) HealthCheck(ctx context.Context, request *api.HealthCheckReques
 }
 func (w *Worker) createFile(index int) (*os.File, error) {
 	intermediateFileName := fmt.Sprintf("intermediate-%s-%d.txt", w.Id, index)
+	_, err := os.Stat(intermediateFileName)
+	if err == nil {
+		// 文件存在，创建一个随机文件
+		intermediateFileName = fmt.Sprintf("t-intermediate-%s-%d.txt", w.Id, index)
+		return os.Create(intermediateFileName)
+	}
+
 	return os.Create(intermediateFileName)
+
 }
 
 type KeyValuePair struct {
